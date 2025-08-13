@@ -2,6 +2,7 @@ body {
   margin: 0;
   overflow: hidden;
   touch-action: pan-y;
+  background-color: black;
 }
 
 #loading {

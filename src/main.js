@@ -98,7 +98,7 @@ async function ammoLibraryLoaded() {
       angularFactor: new pc.Vec3(0, 0, 0)
     });
     player.addChild(camera);
-    camera.setLocalPosition(0, 1.635, 0);
+    camera.setLocalPosition(0, 1, 0);
     player.addComponent('script');
     player.script.create('firstPersonMovement', {
       attributes: {
@@ -136,7 +136,7 @@ async function ammoLibraryLoaded() {
     const textureAssetIds = [];
     for (let i = 0; i < 6; i++) {
       const textureAsset = new pc.Asset(`skybox-texture-${i}`, 'texture', {
-        url: `/assets/${prefix}${suffixes[i]}${fileExtension}`,
+        url: `assets/${prefix}${suffixes[i]}${fileExtension}`,
       });
       textureAssetIds.push(textureAsset.id);
       app.assets.add(textureAsset);
@@ -146,7 +146,7 @@ async function ammoLibraryLoaded() {
       'skybox-cubemap',
       'cubemap',
       {
-        url: `/assets/${prefix}prefiltered.png`,
+        url: `assets/${prefix}prefiltered.png`,
       },
       {
         textures: textureAssetIds,
