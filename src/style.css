@@ -1,0 +1,15 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+#loading {
+  font: bold 30px bold Georgia, serif;
+  color: white;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}

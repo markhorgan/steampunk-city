@@ -8,10 +8,14 @@ import ammoWasmUrl from './lib/ammo.wasm.wasm?url';
 import ammoFallbackUrl from './lib/ammo.js?url';
 import firstPersonMovementUrl from './lib/first-person-movement?url';
 import postEffectSsaoUrl from './lib/posteffect-ssao?url'
+import postEffectSepiaUrl from './lib/posteffect-sepia?url'
 import { registerScripts, 
   STREAM_CONTROLLER_SCRIPT_NAME, 
   STREAMING_MODEL_SCRIPT_NAME,
   EVENT_LOAD } from '@polygon-streaming/web-player-playcanvas';
+
+const MODEL_URL = 'https://d2s1xgv6f13wzb.cloudfront.net/markhorgan/steampunk-city.xrg';
+//const MODEL_URL = '/model.xrg';
 
 pc.WasmModule.setConfig('Ammo', {
   glueUrl: ammoGlueUrl,
@@ -39,6 +43,7 @@ async function ammoLibraryLoaded() {
 
   const assets = {
     ssao: new pc.Asset('ssao', 'script', { url: postEffectSsaoUrl }),
+    sepia: new pc.Asset('sepia', 'script', { url: postEffectSepiaUrl }),
     firstPersonMovement: new pc.Asset('first-person-movement', 'script', { url: firstPersonMovementUrl })
   };
 
@@ -53,7 +58,7 @@ async function ammoLibraryLoaded() {
     // Camera
     const camera = new pc.Entity('camera');
     const cameraComponent = camera.addComponent('camera', {
-      clearColor: new pc.Color(0.4, 0.4, 0.4),
+      clearColor: new pc.Color(0, 0, 0),
       nearClip: 0.01
     });
     cameraComponent.toneMapping = pc.TONEMAP_ACES;
@@ -63,8 +68,14 @@ async function ammoLibraryLoaded() {
         enabled: true,
         radius: 3,
         samples: 16,
-        brightness: 0.5,
+        brightness: 0,
         downscale: 1
+      }
+    });
+    camera.script.create('sepia', {
+      attributes: {
+        enabled: true,
+        amount: 0.4
       }
     });
 
@@ -98,15 +109,17 @@ async function ammoLibraryLoaded() {
     });
     app.root.addChild(player);
 
+    const lightColor = new pc.Color(237/255, 187/255, 126/255);
+
     // Ambient light
-    app.scene.ambientLight = new pc.Color(0.81, 0.89, 0.94);
+    app.scene.ambientLight = lightColor;
     app.scene.ambientLight.intensity = 0.3;
     
     // Sun
     const sunLight = new pc.Entity();
     sunLight.addComponent('light', {
       type: 'directional',
-      color: new pc.Color(237/255, 234/255, 168/255),
+      color: lightColor,
       intensity: 1.5,
       castShadows: true,
       normalOffsetBias: 0.05,
@@ -116,19 +129,8 @@ async function ammoLibraryLoaded() {
     sunLight.setEulerAngles(-30, -145, 0);
     app.root.addChild(sunLight);
 
-    // Skydome light
-    const skydomeLight = new pc.Entity();
-    skydomeLight.addComponent('light', {
-      type: 'directional',
-      color: new pc.Color(168/255, 215/255, 237/255),
-      intensity: 0.4,
-      castShadows: false
-    });
-    skydomeLight.setEulerAngles(0, 0, 0);
-    app.root.addChild(skydomeLight);
-
     // Skybox
-    const prefix = 'the_sky_is_on_fire_';
+    const prefix = 'cubemap_';
     const suffixes = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
     const fileExtension = '.png';
     const textureAssetIds = [];
@@ -140,11 +142,6 @@ async function ammoLibraryLoaded() {
       app.assets.add(textureAsset);
       app.assets.load(textureAsset);
     }
-    /*
-    {
-      url: `/assets/env-sky-cube-prefiltered.png`,
-    },
-    */
     const cubemapAsset = new pc.Asset(
       'skybox-cubemap',
       'cubemap',
@@ -159,9 +156,6 @@ async function ammoLibraryLoaded() {
       }
     );
     cubemapAsset.loadFaces = true;
-    cubemapAsset.once('load', function () {
-      app.scene.setSkybox(cubemapAsset.resources);
-    });
     app.assets.add(cubemapAsset);
     app.assets.load(cubemapAsset);
 
@@ -190,7 +184,7 @@ async function ammoLibraryLoaded() {
     streamingModel.addComponent('script');
     const streamingModelScript = streamingModel.script.create(STREAMING_MODEL_SCRIPT_NAME, {
       attributes: {
-        path: '/steampunk.xrg',
+        path: MODEL_URL,
         qualityPriority: 1,
         useAlpha: true,
         useMetalRoughness: true,
@@ -203,7 +197,9 @@ async function ammoLibraryLoaded() {
       }
     });
     streamingModelScript.once(EVENT_LOAD, () => {
-      playerRigidBodyComponent.enabled = true
+      playerRigidBodyComponent.enabled = true;
+      app.scene.setSkybox(cubemapAsset.resources);
+      document.getElementById('loading').style.display = 'none';
     });
 
     streamController.addChild(streamingModel);
