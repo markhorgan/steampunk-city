@@ -3,6 +3,11 @@ body {
   overflow: hidden;
   touch-action: pan-y;
   background-color: black;
+  position: relative;
+}
+
+#application {
+  z-index: 0;
 }
 
 #loading {
@@ -13,4 +18,39 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1;
+}
+
+#buttons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: none;
+  gap: 10px;
+  z-index: 1;
+}
+
+.button {
+  width: 50px;
+  height: 50px;
+  text-indent: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.4;
+  display: block;
+  padding: 5px;
+}
+
+
+#button-fullscreen {
+  background: no-repeat url('../images/icon_fullscreen.svg');
+  visibility: hidden;
+}
+
+#button-mute.is-unmuted {
+  background: no-repeat url('../images/icon_mute.svg');
+}
+
+#button-mute.is-muted {
+  background: no-repeat url('../images/icon_unmute.svg');
 }

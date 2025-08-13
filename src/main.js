@@ -13,9 +13,14 @@ import { registerScripts,
   STREAM_CONTROLLER_SCRIPT_NAME, 
   STREAMING_MODEL_SCRIPT_NAME,
   EVENT_LOAD } from '@polygon-streaming/web-player-playcanvas';
+import { isIos } from './utils';
 
-const MODEL_URL = 'https://d2s1xgv6f13wzb.cloudfront.net/markhorgan/steampunk-city.xrg';
-//const MODEL_URL = '/model.xrg';
+let MODEL_URL;
+if (import.meta.env.DEV) {
+  MODEL_URL = '/model.xrg';
+} else {
+  MODEL_URL = 'https://d2s1xgv6f13wzb.cloudfront.net/markhorgan/steampunk-city.xrg';
+}
 
 pc.WasmModule.setConfig('Ammo', {
   glueUrl: ammoGlueUrl,
@@ -29,7 +34,7 @@ async function ammoLibraryLoaded() {
   const app = new pc.Application(canvas, {
     mouse: new pc.Mouse(canvas),
     keyboard: new pc.Keyboard(window),
-    touch: new pc.TouchDevice(window),
+    touch: new pc.TouchDevice(canvas),
   });
 
   app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio, 2);
@@ -136,7 +141,7 @@ async function ammoLibraryLoaded() {
     const textureAssetIds = [];
     for (let i = 0; i < 6; i++) {
       const textureAsset = new pc.Asset(`skybox-texture-${i}`, 'texture', {
-        url: `assets/${prefix}${suffixes[i]}${fileExtension}`,
+        url: `images/${prefix}${suffixes[i]}${fileExtension}`,
       });
       textureAssetIds.push(textureAsset.id);
       app.assets.add(textureAsset);
@@ -146,7 +151,7 @@ async function ammoLibraryLoaded() {
       'skybox-cubemap',
       'cubemap',
       {
-        url: `assets/${prefix}prefiltered.png`,
+        url: `images/${prefix}prefiltered.png`,
       },
       {
         textures: textureAssetIds,
@@ -200,8 +205,77 @@ async function ammoLibraryLoaded() {
       playerRigidBodyComponent.enabled = true;
       app.scene.setSkybox(cubemapAsset.resources);
       document.getElementById('loading').style.display = 'none';
+      //document.getElementById('buttons').style.display = 'flex';
     });
 
     streamController.addChild(streamingModel);
   });
 }
+
+// Audio
+// ---------------------------------------------------------
+
+const audioElement = new Audio('When_You_Gotta_Go_You_Gotta_Go.mp3');
+audioElement.loop = true;
+audioElement.preload = 'auto';
+audioElement.volume = 0.75;
+
+// Buttons
+// ---------------------------------------------------------
+
+/*if (!isIos()) {
+  document.getElementById('button-fullscreen').style.visibility = 'visible'
+}*/
+
+const elementFullscreen = function(element) {
+  if (element.requestFullscreen) {
+    element.requestFullscreen()
+    //@ts-ignore
+  } else if (element.webkitRequestFullscreen) {
+    //@ts-ignore
+    element.webkitRequestFullscreen()
+    //@ts-ignore
+  } else if (element.msRequestFullscreen) {
+    //@ts-ignore
+    element.msRequestFullscreen()
+  }
+}
+
+const fullScreenButtonEl = document.getElementById('button-fullscreen')
+fullScreenButtonEl.addEventListener('click', function(event) {
+  elementFullscreen(renderer.domElement);
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+});
+
+const toggleAudio = function() {
+  if (audioElement.paused) {
+    audioElement.play()
+  } else {
+    audioElement.muted = !audioElement.muted
+  }
+  if (audioElement.muted) {
+    muteButtonEl.classList.add('is-muted')
+    muteButtonEl.classList.remove('is-unmuted')
+  } else {
+    muteButtonEl.classList.add('is-unmuted')
+    muteButtonEl.classList.remove('is-muted')
+  }
+}
+
+const muteButtonEl = document.getElementById('button-mute')
+muteButtonEl.addEventListener('click', function(event) {
+  toggleAudio();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+});
+
+document.addEventListener('keydown', function(event) {
+  const key = event.key.toLowerCase();
+
+  switch(key) {
+    case 'm':
+      toggleAudio();
+      break;
+  }
+});
