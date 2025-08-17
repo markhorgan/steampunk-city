@@ -9,6 +9,8 @@ import ammoFallbackUrl from './lib/ammo.js?url';
 import firstPersonMovementUrl from './lib/first-person-movement?url';
 import postEffectSsaoUrl from './lib/posteffect-ssao?url'
 import postEffectSepiaUrl from './lib/posteffect-sepia?url'
+import postEffectBloomUrl from './lib/posteffect-bloom?url'
+import postEffectHueSaturationUrl from './lib/posteffect-hue-saturation?url'
 import { registerScripts, 
   STREAM_CONTROLLER_SCRIPT_NAME, 
   STREAMING_MODEL_SCRIPT_NAME,
@@ -35,9 +37,10 @@ async function ammoLibraryLoaded() {
     mouse: new pc.Mouse(canvas),
     keyboard: new pc.Keyboard(window),
     touch: new pc.TouchDevice(canvas),
+    elementInput: new pc.ElementInput(canvas)
   });
 
-  app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio, 2);
+  app.graphicsDevice.maxPixelRatio = Math.min(window.devicePixelRatio, 1);
 
   app.setCanvasFillMode(pc.FILLMODE_FILL_WINDOW);
   app.setCanvasResolution(pc.RESOLUTION_AUTO);
@@ -48,7 +51,9 @@ async function ammoLibraryLoaded() {
 
   const assets = {
     ssao: new pc.Asset('ssao', 'script', { url: postEffectSsaoUrl }),
-    sepia: new pc.Asset('sepia', 'script', { url: postEffectSepiaUrl }),
+    //sepia: new pc.Asset('sepia', 'script', { url: postEffectSepiaUrl }),
+    //bloom: new pc.Asset('bloom', 'script', { url: postEffectBloomUrl }),
+    hueSaturation: new pc.Asset('hueSaturation', 'script', { url: postEffectHueSaturationUrl }),
     firstPersonMovement: new pc.Asset('first-person-movement', 'script', { url: firstPersonMovementUrl })
   };
 
@@ -71,18 +76,39 @@ async function ammoLibraryLoaded() {
     camera.script.create('ssao', {
       attributes: {
         enabled: true,
-        radius: 3,
+        radius: 2,
         samples: 16,
         brightness: 0,
         downscale: 1
       }
     });
-    camera.script.create('sepia', {
+    /*camera.script.create('sepia', {
       attributes: {
         enabled: true,
-        amount: 0.4
+        amount: 0.6
+      }
+    });*/
+    /*camera.script.create('bloom', {
+      attributes: {
+        enabled: true,
+        intensity: 0.6,
+        threshold: 0.8,
+        blurAmount: 15
+      }
+    });*/
+    camera.script.create('hueSaturation', {
+      attributes: {
+        enabled: true,
+        hue: 0,
+        saturation: 0.1
       }
     });
+
+    // Fog
+    const fogParams = app.scene.fog;
+    fogParams.color = new pc.Color(0.3, 0.3, 0.3);
+    fogParams.end = 140;
+    fogParams.type = pc.FOG_LINEAR;
 
     app.start();
 
@@ -114,7 +140,7 @@ async function ammoLibraryLoaded() {
     });
     app.root.addChild(player);
 
-    const lightColor = new pc.Color(237/255, 187/255, 126/255);
+    const lightColor = new pc.Color(237/255, 176/255, 102/255);
 
     // Ambient light
     app.scene.ambientLight = lightColor;
@@ -125,7 +151,7 @@ async function ammoLibraryLoaded() {
     sunLight.addComponent('light', {
       type: 'directional',
       color: lightColor,
-      intensity: 1.5,
+      intensity: 1,
       castShadows: true,
       normalOffsetBias: 0.05,
       shadowResolution: 2048,
@@ -137,7 +163,7 @@ async function ammoLibraryLoaded() {
     // Skybox
     const prefix = 'cubemap_';
     const suffixes = ['px', 'nx', 'py', 'ny', 'pz', 'nz'];
-    const fileExtension = '.png';
+    const fileExtension = '.jpg';
     const textureAssetIds = [];
     for (let i = 0; i < 6; i++) {
       const textureAsset = new pc.Asset(`skybox-texture-${i}`, 'texture', {
@@ -151,7 +177,7 @@ async function ammoLibraryLoaded() {
       'skybox-cubemap',
       'cubemap',
       {
-        url: `images/${prefix}prefiltered.png`,
+        url: `images/${prefix}prefiltered.jpg`,
       },
       {
         textures: textureAssetIds,
@@ -170,7 +196,7 @@ async function ammoLibraryLoaded() {
       attributes: { 
         camera,
         cameraType: 'nonPlayer',
-        occlusionCulling: false,
+        occlusionCulling: true,
         occlusionGeometry: 'boundingBox',
         occlusionQueryFrequency: 8,
         triangleBudget: 5000000,
@@ -206,6 +232,13 @@ async function ammoLibraryLoaded() {
       app.scene.setSkybox(cubemapAsset.resources);
       document.getElementById('loading').style.display = 'none';
       //document.getElementById('buttons').style.display = 'flex';
+
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('auto-play-audio')) {
+        document.addEventListener('mousedown', function() {
+          playAudio()
+        })
+      }
     });
 
     streamController.addChild(streamingModel);
@@ -261,6 +294,12 @@ const toggleAudio = function() {
     muteButtonEl.classList.add('is-unmuted')
     muteButtonEl.classList.remove('is-muted')
   }
+}
+
+const playAudio = function() {
+  audioElement.play()
+  muteButtonEl.classList.add('is-unmuted')
+  muteButtonEl.classList.remove('is-muted')
 }
 
 const muteButtonEl = document.getElementById('button-mute')

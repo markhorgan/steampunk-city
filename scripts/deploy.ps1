@@ -12,7 +12,8 @@ if (!(Test-Path -Path "build")) {
 $AppId="steampunk-city"
 $ArchiveFileName="$AppId.tgz"
 $UploadPath="/home/web/uploads"
-$TargetPath="/var/www/static/$AppId"
+$WebsiteRoot="/var/www/static"
+$TargetPath="$WebsiteRoot/$AppId"
 
 tar -C dist --exclude="./*.xrg" -czf build/$ArchiveFileName *
 scp build/$ArchiveFileName "${SshId}:$UploadPath/"
